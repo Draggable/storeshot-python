@@ -1,0 +1,64 @@
+name: CI
+
+# Every check of the package on each push to main and each pull request: the generated models match
+# contract/openapi.json, lint, mypy --strict, the tests on the oldest and newest supported Python,
+# the httpx floor, and the reproducible distribution.
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    name: Python ${{ matrix.python }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.10', '3.15']
+    env:
+      UV_PYTHON: ${{ matrix.python }}
+      UV_PYTHON_PREFERENCE: only-managed
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          persist-credentials: false
+
+      - name: Setup uv
+        uses: astral-sh/setup-uv@68559e99cc807c1eb7e9238fd43a15bba460eec2 # v10.3.3
+        with:
+          version: '0.13.7'
+          enable-cache: false
+
+      - name: Install dependencies (locked)
+        run: uv sync --locked
+
+      - name: Generated models match contract/openapi.json
+        run: uv run python scripts/generate.py --check
+
+      - name: Lint and format
+        run: uv run ruff check . && uv run ruff format --check .
+
+      - name: Type check (mypy --strict)
+        run: uv run mypy
+
+      - name: Tests
+        run: uv run pytest
+
+      - name: Tests on the httpx floor
+        if: matrix.python == '3.10'
+        run: |
+          uv run --with 'httpx==0.27.0' python -c "import httpx; assert httpx.__version__ == '0.27.0', httpx.__version__"
+          uv run --with 'httpx==0.27.0' pytest
+
+      - name: Distribution (reproducible, file list, metadata, install smoke)
+        run: uv run python scripts/check_dist.py

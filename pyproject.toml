@@ -1,0 +1,89 @@
+[build-system]
+requires = ["hatchling==1.33.0"]
+build-backend = "hatchling.build"
+
+[project]
+name = "storeshot"
+dynamic = ["version"]
+description = "Official Python SDK for the Storeshot API: App Store and Google Play marketing screenshots from raw app screenshots."
+readme = "README.md"
+requires-python = ">=3.10"
+license = "Apache-2.0"
+license-files = ["LICENSE", "NOTICE"]
+authors = [{ name = "Draggable", email = "support@storeshot.art" }]
+keywords = ["storeshot", "app store", "google play", "screenshots", "sdk", "api"]
+classifiers = [
+  "Development Status :: 4 - Beta",
+  "Intended Audience :: Developers",
+  "Operating System :: OS Independent",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3 :: Only",
+  "Programming Language :: Python :: 3.10",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Programming Language :: Python :: 3.13",
+  "Programming Language :: Python :: 3.14",
+  "Programming Language :: Python :: 3.15",
+  "Topic :: Software Development :: Libraries",
+  "Typing :: Typed",
+]
+dependencies = [
+  "httpx>=0.27,<1",
+  "typing-extensions>=4.7; python_version < '3.11'",
+]
+
+[project.urls]
+Homepage = "https://storeshot.art/docs/"
+Source = "https://github.com/Draggable/storeshot-python"
+Changelog = "https://github.com/Draggable/storeshot-python/blob/main/CHANGELOG.md"
+
+[dependency-groups]
+dev = [
+  "pytest==9.2.0",
+  "mypy==2.4.1",
+  "ruff==0.17.3",
+  # test-only TOML parser for tests/test_package.py on Python 3.10 (tomllib is 3.11+)
+  "tomli==2.5.0; python_version < '3.11'",
+]
+
+[tool.hatch.version]
+path = "src/storeshot/_version.py"
+
+[tool.hatch.build.targets.wheel]
+packages = ["src/storeshot"]
+
+[tool.hatch.build.targets.sdist]
+only-include = ["src", "README.md", "CHANGELOG.md", "LICENSE", "NOTICE", "pyproject.toml"]
+
+[tool.uv]
+required-version = ">=0.13.6,<0.14"
+build-constraint-dependencies = [
+  "hatchling==1.33.0",
+  "packaging==26.3",
+  "pathspec==1.1.1",
+  "pluggy==1.7.0",
+  "tomlkit==0.15.2",
+  "tomli==2.5.0",
+  "trove-classifiers==2026.9.21.13",
+]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --basetemp=.tmp/pytest -p no:cacheprovider"
+filterwarnings = ["error"]
+
+[tool.mypy]
+strict = true
+python_version = "3.10"
+files = ["src", "scripts"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py310"
+# Generated models and verbatim inputs (tests/fixtures/ in the mirror) are not linted.
+extend-exclude = ["src/storeshot/_generated", "tests/fixtures"]
+
+[tool.ruff.lint]
+select = ["E", "F", "W", "I", "UP", "B"]
+# ruff format owns line length; long string literals and URLs may stay long.
+ignore = ["E501"]
